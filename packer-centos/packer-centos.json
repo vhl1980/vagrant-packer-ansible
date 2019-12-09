@@ -1,0 +1,60 @@
+{
+  "variables": {
+    "build_number": "{{timestamp}}",
+    "centos_arch": "x86_64",
+    "iso_base_url": "http://ftp.heanet.ie/pub/centos",
+    "centos_version": "7.7.1908",
+    "iso_checksum": "9a2c47d97b9975452f7d582264e9fc16d108ed8252ac6816239a3b58cef5c53d",
+    "iso_checksum_type": "SHA256",
+    "iso_filename": "CentOS-7-x86_64-Minimal-1908",
+    "username": "root",
+    "password": "password",
+    "disk_size": "10000",
+    "timeout": "30m",
+    "headless": "true"
+  },
+  "builders": [
+    {
+      "name": "vbox",
+      "type": "virtualbox-iso",
+      "iso_url": "{{user `iso_base_url`}}/{{user `centos_version`}}/isos/{{user `centos_arch`}}/{{user `iso_filename`}}.iso",
+      "iso_checksum": "{{user `iso_checksum`}}",
+      "iso_checksum_type": "{{user `iso_checksum_type`}}",
+      "ssh_username": "{{user `username`}}",
+      "ssh_password": "{{user `password`}}",
+      "ssh_wait_timeout": "{{user `timeout`}}",
+      "boot_command": [
+        "<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/{{user `ks_file`}}<enter><wait>"
+      ],
+      "disk_size": "{{user `disk_size`}}",
+      "hard_drive_interface": "sata",
+      "guest_os_type": "RedHat_64",
+      "headless": "{{user `headless`}}",
+      "http_directory": "http",
+      "shutdown_command": "shutdown -P now",
+      "vboxmanage": [
+        [ "modifyvm", "{{.Name}}", "--memory", "512" ],
+        [ "modifyvm", "{{.Name}}", "--cpus", "1" ]
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": "scripts/vbox-tools.sh",
+      "only": ["vbox"]
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/cleanup.sh"
+      ]
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "vagrant",
+      "output": "CentOS-{{user `centos_version`}}-{{user `centos_arch`}}-{{user `build_number`}}"
+    }
+  ]
+}
